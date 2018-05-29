@@ -1,0 +1,44 @@
+---
+title: "Word Embeddings Visual"
+author: "Reid McIlroy-Young"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    social: menu
+    source_code: embed
+runtime: shiny
+---
+<style>                     
+.navbar {
+  background-color:maroon;
+  border-color:black;
+}
+.navbar-brand {
+color:white!important;
+}
+</style>   
+```{r global, include=FALSE}
+options(shiny.sanitize.errors = FALSE)
+library(ggplot2)
+library(plotly)
+library(plyr)
+library(xkcdcolors)
+library(flexdashboard)
+library(shinyWidgets)
+
+if (dir.exists('data/')) {
+  filesDir <- 'data/'
+} else {
+  filesDir <- '/home/reid/int-reidmcy/data/'
+}
+
+
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+### Introduction
+
+Testing
+

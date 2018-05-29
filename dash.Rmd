@@ -25,14 +25,14 @@ library(plyr)
 library(xkcdcolors)
 library(flexdashboard)
 library(shinyWidgets)
+library(reticulate)
+use_python('/Users/Reid/anaconda/bin/python')
 
 if (dir.exists('data/')) {
   filesDir <- 'data/'
 } else {
   filesDir <- '/home/reid/int-reidmcy/data/'
 }
-
-
 ```
 
 Column {.sidebar}
@@ -42,3 +42,29 @@ Column {.sidebar}
 
 Testing
 
+Column 
+-----------------------------------------------------------------------
+
+### Testing
+
+``` {r}
+
+#simple_id <- import('simple_id')
+#gensim <- import('gensim')
+#torch <- import('torch')
+#pandas <- import('pandas')
+source_python('helpers.py')
+
+va <- makeVarray('data/Other social sciences.csv', 'WOS:000206783400002')
+
+
+```
+
+``` {r}
+library(reshape2)
+
+cor <- melt(va)
+cor$val <- cor$value
+ggplot(data = cor, aes(x=variable, y=value, fill=val)) + geom_tile() 
+
+```

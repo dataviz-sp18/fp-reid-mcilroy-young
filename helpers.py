@@ -77,3 +77,18 @@ class TokensLookup(object):
         return self._fetched[key]
 
 Tokens = TokensLookup(tokens)
+
+def makeVaryingArray(row_dict, Net, w2v):
+
+    preds = []
+    for i in range(len(row_dict['title_tokens'])):
+        predT = []
+        for j in range(len(row_dict['abstract_tokens'])):
+            newDict = {
+                'abstract_tokens' : row_dict['abstract_tokens'][:j+1],
+                'title_tokens' : row_dict['title_tokens'][:i + 1],
+                }
+            pred = Net.predictRow(newDict, w2v=w2v)
+            predT.append(float(pred['probPos']))
+        preds.append(predT)
+    return preds

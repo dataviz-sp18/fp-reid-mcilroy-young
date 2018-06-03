@@ -111,6 +111,4 @@ def makeVarray(fileName, wos_id):
     return df
 
 
-
-
 #df_sample = pandas.read_csv('data/Other social sciences.csv', error_bad_lines = False)

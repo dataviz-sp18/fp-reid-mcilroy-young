@@ -42,7 +42,7 @@ if (dir.exists('data/')) {
 
 w2vPath <- paste(filesDir, 'w2v.zip', sep = '')
 modelPath = paste(filesDir, 'BiRNN-2-128-260.pt', sep = '')
-outputsDir <- paste(filesDir, '../outputs', sep = '')
+outputsDir <- paste(filesDir, '../outputs/', sep = '')
 
 subject_names <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
 names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
@@ -154,13 +154,13 @@ renderTable({
 
 
 renderTable({
-  title <- row()[['title']]
-  abstract <- row()[['abstract']]
-  if (input$goButton > 0) {
-    simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = 'testing.csv')
-    read.csv('testing.csv')
-  }
+  title <- "Exploration of computers, tech and R"#row()[['title']]
+  abstract <- 'We used R and Python to do stuff. Then we did more stuff. Our code can be found on Github'# row()[['abstract']]
+  saveLoc <- paste(outputsDir, row()[['wos_id']], '.csv', sep = '')
   
-  #
+  if (input$goButton > 0) {
+    simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = saveLoc)
+    read.csv(saveLoc)
+  }
 })
 ```

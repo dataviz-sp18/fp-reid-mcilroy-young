@@ -1,0 +1,72 @@
+---
+title: "Word Embeddings Visual"
+author: "Reid McIlroy-Young"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    social: menu
+    source_code: embed
+runtime: shiny
+---
+<style>                     
+.navbar {
+  background-color:maroon;
+  border-color:black;
+}
+.navbar-brand {
+color:white!important;
+}
+</style>   
+```{r global, include=FALSE}
+options(shiny.sanitize.errors = FALSE)
+library(ggplot2)
+library(plotly)
+library(plyr)
+library(xkcdcolors)
+library(flexdashboard)
+library(shinyWidgets)
+library(reticulate)
+
+
+if (dir.exists('data/')) {
+  filesDir <- 'data/'
+  use_python('/Users/Reid/anaconda/bin/python')
+} else {
+  filesDir <- '/home/reid/int-reidmcy/data/'
+  use_python('/home/reid/anaconda3/bin/python')
+}
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+### Introduction
+
+Testing
+
+Column 
+-----------------------------------------------------------------------
+
+### Testing
+
+``` {r}
+
+#simple_id <- import('simple_id')
+#gensim <- import('gensim')
+#torch <- import('torch')
+#pandas <- import('pandas')
+source_python('helpers.py')
+
+va <- makeVarray('data/Other social sciences.csv', 'WOS:000206783400002')
+
+
+```
+
+``` {r}
+library(reshape2)
+
+cor <- melt(va)
+cor$val <- cor$value
+ggplot(data = cor, aes(x=variable, y=value, fill=val)) + geom_tile() 
+
+```

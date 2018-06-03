@@ -1,14 +1,16 @@
 ---
-title: "Word Embeddings Visual"
+title: "WOS Record Comparison"
 author: "Reid McIlroy-Young"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    social: menu
+    orientation: rows
     source_code: embed
+    vertical_layout: scroll
+    
 runtime: shiny
 ---
-<style>                     
+
+<style>
 .navbar {
   background-color:maroon;
   border-color:black;
@@ -16,55 +18,268 @@ runtime: shiny
 .navbar-brand {
 color:white!important;
 }
-</style>   
+</style>
+
 ```{r global, include=FALSE}
 options(shiny.sanitize.errors = FALSE)
 library(ggplot2)
 library(plotly)
+library(kableExtra)
+library(knitr)
 library(plyr)
 library(xkcdcolors)
 library(flexdashboard)
 library(shinyWidgets)
-library(reticulate)
-use_python('/Users/Reid/anaconda/bin/python')
+
+#These are annoying to get working
+library("RDRPOSTagger")
+library("tokenizers")
 
 if (dir.exists('data/')) {
   filesDir <- 'data/'
 } else {
-  filesDir <- '/home/reid/int-reidmcy/data/'
+  filesDir <- '/home/reid/ntg-reidmcy/data/'
 }
-```
 
-Column {.sidebar}
------------------------------------------------------------------------
-
-### Introduction
-
-Testing
-
-Column 
------------------------------------------------------------------------
-
-### Testing
-
-``` {r}
-
-#simple_id <- import('simple_id')
-#gensim <- import('gensim')
-#torch <- import('torch')
-#pandas <- import('pandas')
-source_python('helpers.py')
-
-va <- makeVarray('data/Other social sciences.csv', 'WOS:000206783400002')
 
 
 ```
 
+Row
+-----------------------------------------------------------------------
+
+### Record Selector
+
+```{r}
+subject_names <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
+names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
+
+pickerInput(inputId = 'subject',
+            label = 'Subject',
+            choices = subject_names,
+            selected ='Psychology')
+
+materialSwitch(inputId = "same", label = "Same Record across views", status = "primary", right = TRUE)
+
+
+df <- reactive({
+  read.csv(paste(filesDir, input$subject, '.csv', sep = ''))
+})
+
+renderUI({
+  titles <- lapply(df()['title'], as.character)
+  if (input$same) {
+    selectInput(inputId = 'title',
+            label = 'Target Record',
+            choices = titles,
+            width = '100%')
+  } else {
+    s1 <- selectInput(inputId = 'titleS',
+            label = 'First Target Record',
+            choices = titles,
+            width = '100%')
+    s2 <- selectInput(inputId = 'titleF',
+            label = 'Second Target Record',
+            choices = titles,
+            width = '100%')
+    tagList(s1,s2, HTML("<div>First select one of the six subjects then choose if you want two views of the same record, or each view to show a separate record.<br> <br> This app is a viewer for some of the records used in my thesis. It shows all the relevant information provided about two records, along with the models predictions. The models are two deep neural networks trained to detect computational style in social science papers. The first uses the full dataset while the second uses only records from a single subject. The models generally agree, but do have a few differences of opinion. When using the app try and find records with differing results and determine what caused them.</div>"))
+  }
+})
+
+```
+
+
+Row {.tabset}
+-------------------------------------
+
+### First Record
+
 ``` {r}
-library(reshape2)
 
-cor <- melt(va)
-cor$val <- cor$value
-ggplot(data = cor, aes(x=variable, y=value, fill=val)) + geom_tile() 
+row <- reactive({
+  if (input$same) {
+    title <- input$title
+  } else {
+    title <- input$titleS
+  }
+  df()[which(df()$title == title),]
+})
 
+
+renderUI({
+  
+  s = paste('<div><h3>', row()[['title']], '</h3></div>', sep = '')
+  s = paste(s, '<div> Is ', row()[['is_comp']],' and the models predict it:</div>')
+  s = paste(s, '<div><b>', 'Full Model Prediction: ','</b><i>', row()[['pred']], '</i> with probabily of being computational: ', sprintf('%.1f', row()[['probPos']] * 100) , '%</div>', sep = '')
+  s = paste(s, '<div><b>', 'Subject Model Prediction: ','</b><i>', row()[['pred_part']], '</i> with probabily of being computational: ', sprintf('%.1f', row()[['probPos_partial']] * 100) , '%</div>', sep = '')
+  HTML(s)
+})
+
+```
+
+### Abstract
+
+``` {r}
+renderUI({
+  
+  s = paste('<div>', row()[['abstract']], '</div>')
+  HTML(s)
+})
+```
+
+### Metadata
+
+``` {r}
+renderUI({
+  s = paste('<div> <b> Title: </b>', row()[['title']], '</div>')
+  s = paste(s,'<div> <b> Source: </b>', row()[['source']], '</div>')
+  s = paste(s, '<div> <b> DOI: </b>', row()[['doi']], '</div>')
+  s = paste(s, '<div> <b> WOS ID: </b>', row()[['wos_id']], '</div>')
+  s = paste(s, '<div> <b> Publication Type: </b>', row()[['pubtype']], '</div>')
+  s = paste(s, '<div> <b> Document Type: </b>', row()[['doctype']], '</div>')
+  s = paste(s, '<div> <b> Publication Year: </b>', row()[['pubyear']], '</div>')
+  s = paste(s, '<div> <b> Language: </b>', row()[['language']], '</div>')
+  HTML(s)
+})
+```
+
+### Subjects
+
+``` {r}
+renderTable({
+  row()[c('Economics.and.business', 
+          'Educational.sciences',
+          'Law',
+          'Media.and.communication',
+          'Other.social.sciences',
+          'Political.science',
+          'Psychology',
+          'Social.and.economic.geography')]
+})
+```
+
+### POS Title
+
+``` {r}
+renderTable({
+  a <- row()[['title']]
+  sentences <- tokenize_sentences(as.character(a), simplify = TRUE)
+  unipostagger <- rdr_model(language = "English", annotation = "UniversalPOS")
+  unipostags <- rdr_pos(unipostagger, sentences)
+  #unipostags$word.type <- unipostag_types[unipostags$word.type]
+  unipostags[c('token_id', 'token', 'pos')]
+
+}, options = list(autoWidth = TRUE, scrollX = TRUE, scrollY = TRUE))
+```
+
+
+### POS Abstract
+
+``` {r}
+renderTable({
+  a <- row()[['abstract']]
+  sentences <- tokenize_sentences(as.character(a), simplify = TRUE)
+  unipostagger <- rdr_model(language = "English", annotation = "UniversalPOS")
+  unipostags <- rdr_pos(unipostagger, sentences)
+  #unipostags$word.type <- unipostag_types[unipostags$word.type]
+  unipostags[c('token_id', 'token', 'pos')]
+
+}, options = list(autoWidth = TRUE, scrollX = TRUE, scrollY = TRUE))
+```
+
+Row {.tabset}
+-------------------------------------
+
+### Second Record
+
+``` {r}
+
+row2 <- reactive({
+  if (input$same) {
+    title <- input$title
+  } else {
+    title <- input$titleF
+  }
+  df()[which(df()$title == title),]
+})
+
+
+renderUI({
+  
+  s = paste('<div><h3>', row2()[['title']], '</h3></div>', sep = '')
+  s = paste(s, '<div> Is ', row2()[['is_comp']],' and the models predict it:</div>')
+  s = paste(s, '<div><b>', 'Full Model Prediction: ','</b><i>', row2()[['pred']], '</i> with probabily of being computational: ', sprintf('%.1f', row2()[['probPos']] * 100) , '%</div>', sep = '')
+  s = paste(s, '<div><b>', 'Subject Model Prediction: ','</b><i>', row2()[['pred_part']], '</i> with probabily of being computational: ', sprintf('%.1f', row2()[['probPos_partial']] * 100) , '%</div>', sep = '')
+  HTML(s)
+})
+
+```
+
+### Abstract
+
+``` {r}
+renderUI({
+  
+  s = paste('<div>', row2()[['abstract']], '</div>')
+  HTML(s)
+})
+```
+
+### Metadata
+
+``` {r}
+renderUI({
+  s = paste('<div> <b> Title: </b>', row2()[['title']], '</div>')
+  s = paste(s,'<div> <b> Source: </b>', row2()[['source']], '</div>')
+  s = paste(s, '<div> <b> DOI: </b>', row2()[['doi']], '</div>')
+  s = paste(s, '<div> <b> WOS ID: </b>', row2()[['wos_id']], '</div>')
+  s = paste(s, '<div> <b> Publication Type: </b>', row2()[['pubtype']], '</div>')
+  s = paste(s, '<div> <b> Document Type: </b>', row2()[['doctype']], '</div>')
+  s = paste(s, '<div> <b> Publication Year: </b>', row2()[['pubyear']], '</div>')
+  s = paste(s, '<div> <b> Language: </b>', row2()[['language']], '</div>')
+  HTML(s)
+})
+```
+
+### Subjects
+
+``` {r}
+renderTable({
+  row2()[c('Economics.and.business', 
+          'Educational.sciences',
+          'Law',
+          'Media.and.communication',
+          'Other.social.sciences',
+          'Political.science',
+          'Psychology',
+          'Social.and.economic.geography')]
+})
+```
+
+### POS Title
+
+``` {r}
+renderTable({
+  a <- row2()[['title']]
+  sentences <- tokenize_sentences(as.character(a), simplify = TRUE)
+  unipostagger <- rdr_model(language = "English", annotation = "UniversalPOS")
+  unipostags <- rdr_pos(unipostagger, sentences)
+  #unipostags$word.type <- unipostag_types[unipostags$word.type]
+  unipostags[c('token_id', 'token', 'pos')]
+
+}, options = list(autoWidth = TRUE, scrollX = TRUE, scrollY = TRUE))
+```
+
+### POS Abstract
+
+``` {r}
+renderTable({
+  a <- row2()[['abstract']]
+  sentences <- tokenize_sentences(as.character(a), simplify = TRUE)
+  unipostagger <- rdr_model(language = "English", annotation = "UniversalPOS")
+  unipostags <- rdr_pos(unipostagger, sentences)
+  #unipostags$word.type <- unipostag_types[unipostags$word.type]
+  unipostags[c('token_id', 'token', 'pos')]
+
+}, options = list(autoWidth = TRUE, scrollX = TRUE, scrollY = TRUE))
 ```

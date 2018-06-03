@@ -30,14 +30,23 @@ library(plyr)
 library(xkcdcolors)
 library(flexdashboard)
 library(shinyWidgets)
+library(reticulate)
 
 if (dir.exists('data/')) {
   filesDir <- 'data/'
+  use_python('/Users/Reid/anaconda/bin/python')
 } else {
-  filesDir <- '/home/reid/ntg-reidmcy/data/'
+  filesDir <- '/home/reid/fp-reidmcy/data/'
+  use_python('/home/reid/anaconda3/bin/python')
 }
 
+w2vPath <- paste(filesDir, 'w2v.zip', sep = '')
+modelPath = paste(filesDir, 'BiRNN-2-128-260.pt', sep = '')
 
+subject_names <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
+names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
+
+simple_id <- import('simple_id', as = 'simple_id')
 
 ```
 
@@ -47,8 +56,7 @@ Row
 ### Record Selector
 
 ```{r}
-subject_names <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
-names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
+
 
 pickerInput(inputId = 'subject',
             label = 'Subject',
@@ -72,6 +80,18 @@ renderUI({
 
 Row {.tabset}
 -------------------------------------
+
+### Python
+
+``` {r}
+
+
+renderTable({
+  title <- "Exploration of computers, tech and R"
+  abstract <- 'We used R and Python to do stuff. Then we did more stuff. Our code can be found on Github'
+  simple_id$makeVarArray(title, abstract, w2vPath, modelPath)
+})
+```
 
 ### Record
 

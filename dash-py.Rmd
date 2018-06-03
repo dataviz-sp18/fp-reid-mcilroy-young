@@ -32,7 +32,7 @@ if (dir.exists('data/')) {
   filesDir <- 'data/'
   use_python('/Users/Reid/anaconda/bin/python')
 } else {
-  filesDir <- '/home/reid/int-reidmcy/data/'
+  filesDir <- '/home/reid/fp-reidmcy/data/'
   use_python('/home/reid/anaconda3/bin/python')
 }
 ```

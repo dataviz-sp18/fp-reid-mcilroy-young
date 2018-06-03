@@ -6,13 +6,12 @@ import gensim
 import sys
 import seaborn
 import warnings
+import pandas
 warnings.filterwarnings('ignore')
 
 modelFname = 'data/BiRNN-2-128-260.pt'
 fullFname = 'data/full_ss_500.tsv'
 tokens = 'data/tokens.csv'
-
-
 
 seaborn.set_context("paper", rc={
                                  "lines.linewidth": 2,
@@ -32,6 +31,8 @@ seaborn.set(rc = {
 seaborn.set_palette(seaborn.color_palette("Set2", 10))
 
 seaborn.axes_style()
+
+#w2v = gensim.models.word2vec.Word2Vec.load('w2v/w2v.bin')
 
 def get_classes(s):
     try:
@@ -92,3 +93,24 @@ def makeVaryingArray(row_dict, Net, w2v):
             predT.append(float(pred['probPos']))
         preds.append(predT)
     return preds
+
+def makeVarray(fileName, wos_id):
+
+    Net = torch.load(modelFname).cuda()
+
+    df_sample = pandas.read_csv(fileName)
+    df_sample.index = df_sample['wos_id']
+    row = df_sample.loc[wos_id]
+    row_dict = dict(row)
+    row_dict['title_tokens'] = Tokens[row_dict['wos_id']][0]
+    row_dict['abstract_tokens'] = Tokens[row_dict['wos_id']][1]
+
+    va = makeVaryingArray(row_dict, Net, w2v)
+    df = pandas.DataFrame(va)
+    df.columns = [str(c) for c in df]
+    return df
+
+
+
+
+#df_sample = pandas.read_csv('data/Other social sciences.csv', error_bad_lines = False)

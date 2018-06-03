@@ -42,6 +42,7 @@ if (dir.exists('data/')) {
 
 w2vPath <- paste(filesDir, 'w2v.zip', sep = '')
 modelPath = paste(filesDir, 'BiRNN-2-128-260.pt', sep = '')
+outputsDir <- paste(filesDir, '../outputs', sep = '')
 
 subject_names <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
 names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
@@ -63,6 +64,8 @@ pickerInput(inputId = 'subject',
             choices = subject_names,
             selected ='Psychology')
 
+actionButton("goButton", "Go!")
+
 df <- reactive({
   read.csv(paste(filesDir, input$subject, '.csv', sep = ''))
 })
@@ -81,17 +84,7 @@ renderUI({
 Row {.tabset}
 -------------------------------------
 
-### Python
 
-``` {r}
-
-
-renderTable({
-  title <- "Exploration of computers, tech and R"
-  abstract <- 'We used R and Python to do stuff. Then we did more stuff. Our code can be found on Github'
-  simple_id$makeVarArray(title, abstract, w2vPath, modelPath)
-})
-```
 
 ### Record
 
@@ -152,5 +145,22 @@ renderTable({
           'Political.science',
           'Psychology',
           'Social.and.economic.geography')]
+})
+```
+
+### Python
+
+``` {r}
+
+
+renderTable({
+  title <- row()[['title']]
+  abstract <- row()[['abstract']]
+  if (input$goButton > 0) {
+    simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = 'testing.csv')
+    read.csv('testing.csv')
+  }
+  
+  #
 })
 ```

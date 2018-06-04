@@ -59,12 +59,27 @@ The first attempt I made was looking at the activations of the RNN, Figure \ref{
 The second attempt I made is at mapping NN with each neuron a node in a graph and each connection an edge. This had many issues, first the number of edges is huge, so the network appears to be a hairball, unless carefully laid out and second once laid out nothing is visible since the layout must be huge. My solution to this was to plot the nodes and edges on a map, but this failed as there is not really a good way of doing it in R. I think this is still worth considering but right now is non-trivial.
 
 The third attempt was inspired by work done in convolutional neural networks (CNNs). CNNs often have a direct visual interpretation since they are based on naturally occurring neural structures for processing images. A method used to some success in convolutional neural network (CNN) visualization and introspection is the \textit{occlusion experiment}, where an image is broken into subsections and the CNN is asked to make a classification with the subsection removed. This method allows one to measure the significance of each of the subsections by measuring how their removal affects the classification certainty. Figure \ref{oc1} shows the effects of removing words from the title and abstract on the classification probability for a toy example with the title of \textit{Exploration of humans, society and R} and abstract `\textit{We used methods and techniques to do stuff. Weber Freud and vocabulary acquisition were explored. Then we did more stuff. Our code can be found on Github.}'. We can see in the bottom left that if the title is \textit{Exploration} and the abstract simply \textit{We used methods and techniques to do stuff.} then the full model gives it a $0.64$ probability of being computational, but if you add the sentence \textit{Weber Freud and vocabulary acquisition were explored.} the probability drops to $0.41$. Similarly adding the final sentence \textit{Our code can be found on Github.} firmly puts the record as computational with a probability of $0.89$ and if \textit{R} is added to the title, the probability goes up to $0.95$.
-	
+
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=1\textwidth]{occ_example}
 	\caption{Model prediction as the title and abstract are added to, colour indicates the probability of the record being computational with blue being high and red low.}\label{oc1}
 \end{figure}
 
+Getting R and Python to interoperate nicely was very challenging and basically fruitless. I used \textit{reticulate} to wrap Python for R which works well for pandas and numpy operations, and just those. If other stuff is brought in the interface becomes unstable. Beyond general instability, the wrapper is inefficient, code that was running fine in pure Python became slower and more memory intensive in \textit{reticulate}. The largest cause of this was the word2vec embeddings which are loaded into memory for faster lookup. To solve this I converted them into a zip file that contains one file for each word in the vocab with the word as it's title and the vector as its value. This makes lookups a disk operation, which is much slower, but requires almost no memory overhead and can be done with only the standard library. But even with this hack the systems interface would still fail frequently. To solve interfacing issues I resorted to writing the heatmaps to a temporary csv file, then reading that with R. This works sometimes, but on the server would crash R. So I have a process running to create the csvs for each of the records in the collection, but at 800 records an 1-2 minutes each (server is slow) I ran out of time and wasn't able to get a stable flexdashboard app running. You can look in \textit{dash.Rmd} to see the framework of the app.
+
 \section*{Results}
+
+My final results thus are the heatmaps, these are a novel way of visualizing RNN classifiers and as such I believe are enough for this assignment. The code in the Rmarkdown file creates a series of heatmaps from selected records and has the capacity to do dynamic input, but because of the Word2Vec being in a zip preparation takes much longer than running the model. If I had a week to work on this, and funding for a real server I could get something pretty running, but I don't. Thus you can try running the code, or look at the images generated in the images directory.
+
+The actual visuals produced use a heat map as that's a good way of showing 2D data, they all use the same colour scheme with the same 0-1 scale to make cross comparison work. the colours are a diverging red to blue pallet that nicely goes to white at .5 which is the turning point of the predictions and thus is useful to be noted. Figure \ref{oc2} shows an output on real data, notice that the title and abstract's changes are both visible as lines vertically and horizontally. I beilve some kind of blending of cells might work better for longer abstracts as they do tend to get crowded, also the numbers on each cell are optional.
+
+Asking how truthful deep NN visuals are is always tricky, and I would have to do some math to see how significant a value change has to be to be important, but you can clearly see how the RNN is affected by words being added, and get a sense of how they affect the outcome. Hopefully this will lead to better visuals as this is certainly a first pass.
+ 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1\textwidth]{occ}
+	\caption{Model prediction as the title and abstract are added to, colour indicates the probability of the record being computational with blue being high and red low.}\label{oc2}
+\end{figure}
+
 \end{document}

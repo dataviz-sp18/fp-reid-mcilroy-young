@@ -48,7 +48,7 @@ outputsDir <- paste(filesDir, 'outputs/', sep = '')
 subject_names <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
 names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
 
-simple_id <- import('simple_id', as = 'simple_id')
+#simple_id <- import('simple_id', as = 'simple_id')
 
 ```
 
@@ -158,20 +158,18 @@ Occusion visualization
 ``` {r}
 
 
-renderTable({
-  title <- "Exploration of computers, tech and R"#row()[['title']]
-  abstract <- 'We used R and Python to do stuff. Then we did more stuff. Our code can be found on Github'# row()[['abstract']]
+renderPlotly({
+  title <- row()[['title']]
+  abstract <- row()[['abstract']]
   saveLoc <- paste(outputsDir, unlist(strsplit(toString(row()[['wos_id']]),':'))[[2]], '.csv', sep = '')
-  
-  
-  
+  if (!file.exists(saveLoc)) {
+    #simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = saveLoc)
+    saveLoc <- paste(outputsDir, '000202848800003', '.csv', sep = '')
+  }
 
-  #simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = saveLoc)
   df <- read.csv(saveLoc)
   df2 <- melt(df)
   g <- ggplot(df2, aes(x = variable, y =X, fill = value)) + geom_tile()
-  #ggplotly(g)
-  
-  df
+  ggplotly(g)
 })
 ```

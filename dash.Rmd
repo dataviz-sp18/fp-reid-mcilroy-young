@@ -31,14 +31,14 @@ library(xkcdcolors)
 library(reshape2)  
 library(flexdashboard)
 library(shinyWidgets)
-library(reticulate)
+#library(reticulate)
 
 if (dir.exists('data/')) {
   filesDir <- 'data/'
-  use_python('/Users/Reid/anaconda/bin/python')
+  #use_python('/Users/Reid/anaconda/bin/python')
 } else {
   filesDir <- '/home/reid/fp-data/'
-  use_python('/home/reid/anaconda3/bin/python')
+  #use_python('/home/reid/anaconda3/bin/python')
 }
 
 w2vPath <- paste(filesDir, 'w2v.zip', sep = '')
@@ -151,3 +151,25 @@ renderTable({
 })
 ```
 
+Occusion visualization
+=======================================================================
+### Python
+
+``` {r}
+
+
+renderPlotly({
+  title <- row()[['title']]
+  abstract <- row()[['abstract']]
+  saveLoc <- paste(outputsDir, unlist(strsplit(toString(row()[['wos_id']]),':'))[[2]], '.csv', sep = '')
+  if (!file.exists(saveLoc)) {
+    #simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = saveLoc)
+    saveLoc <- paste(outputsDir, '000202848800003', '.csv', sep = '')
+  }
+
+  df <- read.csv(saveLoc)
+  df2 <- melt(df)
+  g <- ggplot(df2, aes(x = variable, y =X, fill = value)) + geom_tile()
+  ggplotly(g)
+})
+```

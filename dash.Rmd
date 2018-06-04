@@ -37,13 +37,13 @@ if (dir.exists('data/')) {
   filesDir <- 'data/'
   use_python('/Users/Reid/anaconda/bin/python')
 } else {
-  filesDir <- '/home/reid/fp-reidmcy/data/'
+  filesDir <- '/home/reid/fp-data/'
   use_python('/home/reid/anaconda3/bin/python')
 }
 
 w2vPath <- paste(filesDir, 'w2v.zip', sep = '')
 modelPath = paste(filesDir, 'BiRNN-2-128-260.pt', sep = '')
-outputsDir <- paste(filesDir, '../outputs/', sep = '')
+outputsDir <- paste(filesDir, 'outputs/', sep = '')
 
 subject_names <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')
 names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Political science', 'Other social sciences', 'Media and communication', 'Law', 'Economics and business')

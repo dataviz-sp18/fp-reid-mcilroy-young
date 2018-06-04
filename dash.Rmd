@@ -28,6 +28,7 @@ library(kableExtra)
 library(knitr)
 library(plyr)
 library(xkcdcolors)
+library(reshape2)  
 library(flexdashboard)
 library(shinyWidgets)
 library(reticulate)
@@ -50,6 +51,9 @@ names(subject_names) <- c('Psychology', 'Educational sciences', 'Sociology', 'Po
 simple_id <- import('simple_id', as = 'simple_id')
 
 ```
+
+Record Selection
+=======================================================================
 
 Row
 -----------------------------------------------------------------------
@@ -111,9 +115,8 @@ renderUI({
 
 ``` {r}
 renderUI({
-  
-  s = paste('<div>', row()[['abstract']], '</div>')
-  HTML(s)
+  saveLoc <- paste(outputsDir, strsplit(row()[['wos_id']],':')[[1]][[2]], '.csv', sep = '')
+  s <- paste('<div>', row()[['abstract']], '</div>', saveLoc)
 })
 ```
 
@@ -148,6 +151,8 @@ renderTable({
 })
 ```
 
+Occusion visualization
+=======================================================================
 ### Python
 
 ``` {r}
@@ -156,11 +161,17 @@ renderTable({
 renderTable({
   title <- "Exploration of computers, tech and R"#row()[['title']]
   abstract <- 'We used R and Python to do stuff. Then we did more stuff. Our code can be found on Github'# row()[['abstract']]
-  saveLoc <- paste(outputsDir, row()[['wos_id']], '.csv', sep = '')
+  saveLoc <- paste(outputsDir, unlist(strsplit(toString(row()[['wos_id']]),':'))[[2]], '.csv', sep = '')
   
-  if (input$goButton > 0) {
-    simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = saveLoc)
-    read.csv(saveLoc)
-  }
+  
+  
+
+  #simple_id$makeVarArray(title, abstract, w2vPath, modelPath, outputFile = saveLoc)
+  df <- read.csv(saveLoc)
+  df2 <- melt(df)
+  g <- ggplot(df2, aes(x = variable, y =X, fill = value)) + geom_tile()
+  #ggplotly(g)
+  
+  df
 })
 ```
